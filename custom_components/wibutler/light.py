@@ -2,7 +2,7 @@ import logging
 from homeassistant.components.light import (
     LightEntity,
     ATTR_BRIGHTNESS,
-    SUPPORT_BRIGHTNESS,
+    ColorMode,
 )
 from .const import DOMAIN
 
@@ -55,6 +55,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
 class WibutlerLight(LightEntity):
     """Representation of a Wibutler dimmable light."""
 
+    # HA 2026.5+: SUPPORT_BRIGHTNESS entfernt — Helligkeit ueber color_mode signalisieren
+    _attr_supported_color_modes = {ColorMode.BRIGHTNESS}
+    _attr_color_mode = ColorMode.BRIGHTNESS
+
     def __init__(self, hub, device):
         self._hub = hub
         self._device = device
@@ -67,10 +71,6 @@ class WibutlerLight(LightEntity):
         self._fetch_state(device.get("components", []))
 
     # --- Eigenschaften ---
-    @property
-    def supported_features(self):
-        return SUPPORT_BRIGHTNESS
-
     @property
     def is_on(self):
         return self._is_on

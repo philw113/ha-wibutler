@@ -27,4 +27,5 @@ Letzter Merge-from-Upstream: `cab4be0` (2025-08-26, Merge PR #9 von Fochest).
 - Merge wird als eigene AUF eingeplant, nachdem lokale climate.py-Erweiterungen committed sind
 
 ## Bekannte Probleme
-- **JSONDecodeError beim Setup** seit HA Core 2026.5.1 (Python 3.14 + aiohttp-Upgrade): `response.json()` in `api.py:_request()` schlägt fehl bei ~161 KB-Devices-Response. Workaround als Patch geplant: `response.json()` → `json.loads(await response.text())`.
+- ~~**JSONDecodeError beim Setup** seit HA Core 2026.5.1~~ — gefixt 2026-05-19 via `api.py`-Patch (`response.json()` → `json.loads(await response.text())`).
+- ~~**ImportError `SUPPORT_BRIGHTNESS`** in `light.py` seit HA Core 2026.5~~ — gefixt 2026-05-19: migriert auf `_attr_supported_color_modes = {ColorMode.BRIGHTNESS}` + `_attr_color_mode = ColorMode.BRIGHTNESS`.
