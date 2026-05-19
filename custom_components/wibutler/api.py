@@ -78,7 +78,10 @@ class WibutlerHub:
         try:
             async with self.session.request(method, url, headers=headers, json=data) as response:
                 if response.status in (200, 201):
-                    return await response.json()
+                    # Workaround: aiohttp's response.json() bricht in HA 2026.5+
+                    # (Python 3.14 / neueres aiohttp) bei grossen Wibutler-Responses
+                    # mit JSONDecodeError ab. response.text() + json.loads ist robust.
+                    return json.loads(await response.text())
                 elif response.status == 401:
                     _LOGGER.warning("Token abgelaufen, erneute Authentifizierung erforderlich.")
                     self.token = None
