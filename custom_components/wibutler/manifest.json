@@ -1,11 +1,11 @@
 {
     "domain": "wibutler",
     "name": "wibutler",
-    "version": "1.0.0",
-    "documentation": "https://www.home-assistant.io/integrations/powerdog",
+    "version": "1.0.1+philw113-fork-2026-05-19",
+    "documentation": "https://github.com/philw113/ha-wibutler",
     "requirements": [],
     "dependencies": [],
-    "codeowners": ["@patrickweh"],
+    "codeowners": ["@patrickweh", "@philw113"],
     "config_flow": true,
     "iot_class": "local_polling",
     "integrations": ["sensor", "switch", "number", "select", "light"]

@@ -1,0 +1,86 @@
+name: Upstream Watch
+
+# Wachhund auf patrickweh/ha-wibutler: meldet via ntfy.sh, sobald Upstream
+# neue Commits hat, die in diesem Fork noch nicht gesehen wurden. Letzter
+# gesehener Upstream-SHA wird in .github/upstream-last-seen persistiert.
+#
+# ntfy-Topic: srv-homelab-pve-a5bb56e899af66e2 (pve-Topic, ntfy.sh)
+# Strategie-Doku: docs/decisions/001-fork-pflege-strategie.md
+#
+# Manuell triggerbar via "Run workflow"-Button im Actions-Tab.
+
+on:
+  schedule:
+    - cron: '0 9 * * 1'   # Jeden Montag 09:00 UTC (~10/11:00 CET/CEST)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  check-upstream:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout fork
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch upstream
+        id: fetch
+        run: |
+          git remote add upstream https://github.com/patrickweh/ha-wibutler.git
+          git fetch upstream main --quiet
+
+          NEW_SHA=$(git rev-parse upstream/main)
+          if [ -f .github/upstream-last-seen ]; then
+            LAST_SEEN=$(cat .github/upstream-last-seen | tr -d '[:space:]')
+          else
+            LAST_SEEN=$(git merge-base HEAD upstream/main)
+          fi
+
+          echo "last_seen=$LAST_SEEN" >> "$GITHUB_OUTPUT"
+          echo "new_sha=$NEW_SHA" >> "$GITHUB_OUTPUT"
+
+          if [ "$LAST_SEEN" = "$NEW_SHA" ]; then
+            echo "Upstream unverändert seit $LAST_SEEN — keine Notification."
+            echo "no_new=true" >> "$GITHUB_OUTPUT"
+          else
+            git log --oneline --no-merges "$LAST_SEEN..upstream/main" > /tmp/new_commits.txt
+            COMMIT_COUNT=$(wc -l < /tmp/new_commits.txt | tr -d '[:space:]')
+            UPSTREAM_VERSION=$(git show upstream/main:custom_components/wibutler/manifest.json | grep -oE '"version":\s*"[^"]+"' | grep -oE '"[^"]+"$' | tr -d '"' || echo "?")
+            echo "commit_count=$COMMIT_COUNT" >> "$GITHUB_OUTPUT"
+            echo "upstream_version=$UPSTREAM_VERSION" >> "$GITHUB_OUTPUT"
+            echo "no_new=false" >> "$GITHUB_OUTPUT"
+            echo "Upstream hat $COMMIT_COUNT neue Commits seit $LAST_SEEN:"
+            cat /tmp/new_commits.txt
+          fi
+
+      - name: Notify via ntfy
+        if: steps.fetch.outputs.no_new != 'true'
+        run: |
+          BODY="$(cat /tmp/new_commits.txt)
+
+          Upstream-Version: ${{ steps.fetch.outputs.upstream_version }}
+          Fork:     https://github.com/philw113/ha-wibutler
+          Upstream: https://github.com/patrickweh/ha-wibutler/compare/${{ steps.fetch.outputs.last_seen }}...${{ steps.fetch.outputs.new_sha }}
+
+          Naechster Schritt:  git fetch upstream && git merge upstream/main (climate.py-Konflikte erwartet)
+          Doku: docs/decisions/001-fork-pflege-strategie.md"
+
+          curl -sS -X POST \
+            -H "Title: Wibutler Upstream: ${{ steps.fetch.outputs.commit_count }} neue Commit(s)" \
+            -H "Priority: default" \
+            -H "Tags: zap,wibutler,upstream" \
+            -d "$BODY" \
+            https://ntfy.sh/srv-homelab-pve-a5bb56e899af66e2
+
+      - name: Update last-seen marker
+        if: steps.fetch.outputs.no_new != 'true'
+        run: |
+          echo "${{ steps.fetch.outputs.new_sha }}" > .github/upstream-last-seen
+          git config user.name "upstream-watch-bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add .github/upstream-last-seen
+          git commit -m "chore(upstream-watch): mark ${{ steps.fetch.outputs.new_sha }} as seen [skip ci]"
+          git push
