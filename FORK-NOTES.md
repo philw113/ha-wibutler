@@ -27,6 +27,15 @@ Letzter Merge-from-Upstream: `cab4be0` (2025-08-26, Merge PR #9 von Fochest).
 - Aktueller Bugfix-Bedarf ist orthogonal zum Upstream-Refactor
 - Merge wird als eigene AUF eingeplant, nachdem lokale climate.py-Erweiterungen committed sind
 
+## Convention-Abweichung: kein Notify-Setup
+`PROJEKT-PLAYBOOK §12.4 Schritt 4` verlangt für `service`-Repos ein `.github/workflows/notify-on-failure.yml` + Health-Check-Skript-Stub. **Hier bewusst übersprungen**, da:
+- Dieses Repo ist ein passiver Fork-Mirror einer HA Custom-Integration — kein CI/CD im Repo
+- Der „Live"-Stand läuft in der HA-VM 110 (`/config/custom_components/wibutler/`), nicht im Repo
+- Health-Monitoring der Integration findet auf HA-Ebene statt (HA Repairs, Logs, Entity-States)
+- Deploy ist manuell (`scp` + base64-Pipe + `ha core restart`), kein automatisierter Pipeline-Lauf den man notifyen müsste
+
+Falls künftig CI hinzukommt (z.B. Pre-Deploy-Lint-Lauf), nachpflegen.
+
 ## Bekannte Probleme
 - ~~**JSONDecodeError beim Setup** seit HA Core 2026.5.1~~ — gefixt 2026-05-19 via `api.py`-Patch (`response.json()` → `json.loads(await response.text())`).
 - ~~**ImportError `SUPPORT_BRIGHTNESS`** in `light.py` seit HA Core 2026.5~~ — gefixt 2026-05-19: migriert auf `_attr_supported_color_modes = {ColorMode.BRIGHTNESS}` + `_attr_color_mode = ColorMode.BRIGHTNESS`.
