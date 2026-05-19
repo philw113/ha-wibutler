@@ -16,9 +16,12 @@ Fachliche Ressourcen im Workspace + Parent-Sub-Projekt:
 
 ## Notion
 - Projekt-Workspace: https://www.notion.so/35a7f820f55c815d93b5d6eb881d4ccd (PRJ-10)
-- Notion-Sub-Projekt: *(nachzutragen nach REP-Anlage)*
+- Notion-Sub-Projekt: [REP-26](https://www.notion.so/3657f820f55c814ba31ace4847bbe88f) (in Projekte-DB)
 - GitHub (Fork): https://github.com/philw113/ha-wibutler
 - GitHub (Upstream): https://github.com/patrickweh/ha-wibutler
+- Projekt-Workspaces-DB: 761164c1-160c-4861-8985-32e9ffc8a1cf
+- Projekte-DB: 19abc847-fe0a-40f2-ac71-b49f63f055ff
+- Aufgaben-DB: 61266c90-ed14-4aa7-8f44-df3024884be6
 
 ## Was ist drin
 Fork der Custom-Integration **Wibutler** für Home Assistant. Wird in der laufenden HA-Instanz unter `/config/custom_components/wibutler/` (auf HAOS: `/mnt/data/supervisor/homeassistant/custom_components/wibutler/`) deployed und ist damit der Code-Stand, der die Wibutler-Hub-Anbindung in HA realisiert.

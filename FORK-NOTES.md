@@ -1,6 +1,7 @@
 # Fork-Notes — Drift zum Upstream
 
 **Letztes Update:** 2026-05-19
+**Notion-REP:** [REP-26](https://www.notion.so/3657f820f55c814ba31ace4847bbe88f)
 
 ## Sync-Punkt
 Letzter Merge-from-Upstream: `cab4be0` (2025-08-26, Merge PR #9 von Fochest).
