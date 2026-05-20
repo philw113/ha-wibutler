@@ -28,6 +28,7 @@ Letzter Merge-from-Upstream: `cab4be0` (2025-08-26, Merge PR #9 von Fochest).
 - **Manifest-`version`-Schema:** `<upstream-base>+philw113-fork-<YYYY-MM-DD>` (PEP-440-Build-Metadata, vom Semver-Vergleich ignoriert). Aktuell: `1.0.1+philw113-fork-2026-05-19`.
 - **Upstream-Awareness via GitHub-Action** `.github/workflows/upstream-watch.yml` → ntfy-Push an `srv-homelab-pve-...`-Topic (Montags 09:00 UTC, manuell triggerbar im Actions-Tab)
 - **Letzter gesehener Upstream-SHA** in `.github/upstream-last-seen` (aktuell: `cf8916bc` = Patrick's „Bump version to 1.2.0" vom 2026-03-07)
+- **Reagier-Karte in Notion:** [AUF-208](https://www.notion.so/3667f820f55c81ceba2ae2747d3d97b2) (Status: Wartet) — Sync-Prozess, Festlegungen, Diskussions-Log bei ntfy-Hits
 
 ## Sync-Prozess (wenn ntfy meldet)
 ```bash
