@@ -25,31 +25,31 @@ Letzter Merge-from-Upstream: `cab4be0` (2025-08-26, Merge PR #9 von Fochest).
 
 ## Pflege-Strategie (siehe [ADR-001](docs/decisions/001-fork-pflege-strategie.md))
 - **HACS-Custom-Repo pollt diesen Fork**, nicht Upstream → kein „Update verfügbar"-Banner-Spam
-- **Manifest-`version`-Schema:** `<upstream-base>+philw113-fork-<YYYY-MM-DD>` (PEP-440-Build-Metadata, vom Semver-Vergleich ignoriert). Aktuell: `1.0.1+philw113-fork-2026-05-19`.
-- **Upstream-Awareness via GitHub-Action** `.github/workflows/upstream-watch.yml` → ntfy-Push an `srv-homelab-pve-...`-Topic (Montags 09:00 UTC, manuell triggerbar im Actions-Tab)
-- **Letzter gesehener Upstream-SHA** in `.github/upstream-last-seen` (aktuell: `cf8916bc` = Patrick's „Bump version to 1.2.0" vom 2026-03-07)
-- **Reagier-Karte in Notion:** [AUF-208](https://www.notion.so/3667f820f55c81ceba2ae2747d3d97b2) (Status: Wartet) — Sync-Prozess, Festlegungen, Diskussions-Log bei ntfy-Hits
+- **Manifest-`version`-Schema:** `<upstream-base>+philw113-fork-<YYYY-MM-DD>` (PEP-440-Build-Metadata, vom Semver-Vergleich ignoriert). Aktuell: `1.0.1+philw113-fork-2026-10-19`.
+- **Upstream-Awareness via Update-Check auf pve1** (seit 2026-10-19, [ADR-002](docs/decisions/002-upstream-watch-im-update-check.md)): srv-homelab `scripts/update-check/update-check.sh`, Wochenlauf Montag 07:00, meldet jeden neuen Upstream-HEAD einmal per ntfy. Die GitHub-Action ist gelöscht, GitHub hatte sie wegen 60 Tagen ohne Commit abgeschaltet.
+- **Abgleich selektiv:** einzelne Upstream-Fixes von Hand portieren, kein voller Merge (Licht-`unique_id` upstream geändert, siehe ADR-002). Übernommen: `62b6277` Retry bei fehlendem Login-Token (2026-10-19).
 
-## Sync-Prozess (wenn ntfy meldet)
+## Selektiver Abgleich (wenn der Update-Check meldet)
 ```bash
 cd srv-home-pve-ha-home-wibutler
 git fetch upstream main
-git merge upstream/main            # Konflikte in climate.py erwartet
-# Konflikte auflösen (lokale Anpassungen drüber)
-# manifest-version bumpen: <neue-upstream-version>+philw113-fork-<heute>
-git commit && git push
-# HACS bietet Update im HA-UI an → bestätigen → HACS pullt Fork → HA Restart
+git log --oneline main..upstream/main      # neue Upstream-Commits sichten
+git show <sha>                             # relevante Fixes von Hand portieren (Struktur vor dem Upstream-Refactor)
+# manifest-version: 1.0.1+philw113-fork-<heute>
+git commit && git push origin main
+gh release create v1.0.1-fork-<heute> --repo philw113/ha-wibutler --latest --title ... --notes ...
+# HACS bietet das Update an → vorher Proxmox-Snapshot VM 110 → bestätigen → HA-Neustart → prüfen
 ```
 
 ## Warum kein Upstream-Merge jetzt
 - `climate.py` ist stark divergiert (96 Z. Upstream vs. 426 Z. lokal) — Upstream-Refactor (`WibutlerEntity`-Basisklasse) garantiert konfliktreich
 - Aktuell läuft alles stabil seit Bugfix-Welle 2026-05-19, kein akuter Sync-Anlass
-- Sync wird ausgelöst, wenn die GitHub-Action eine ntfy-Notification schickt (= Patrick hat einen neuen Commit gepusht)
+- Am 2026-10-19 bestätigt: Upstream ändert die Licht-`unique_id` (`{id}_{name}` → `{id}`). Ein voller Merge würde alle Licht-Entities in HA neu anlegen (ADR-002)
 
 ## Convention-Abweichung: kein notify-on-failure.yml (CI)
 `PROJEKT-PLAYBOOK §12.4 Schritt 4` verlangt für `service`-Repos ein `.github/workflows/notify-on-failure.yml` + Health-Check-Skript-Stub. **Hier bewusst übersprungen**, da:
 - Dieses Repo ist ein passiver Fork-Mirror einer HA Custom-Integration — kein klassisches CI/CD
-- Der einzige laufende Workflow ist `upstream-watch.yml` (Polling-Bot ohne Build/Test/Deploy), Failures dort sind unkritisch (im Worst Case verpassen wir einen Upstream-Hinweis, der sich beim nächsten Lauf nachholt)
+- Seit 2026-10-19 gibt es keinen Workflow mehr im Repo, die Upstream-Prüfung läuft im Update-Check auf pve1 (ADR-002)
 - Der „Live"-Stand läuft in der HA-VM 110 (`/config/custom_components/wibutler/`), nicht im Repo — Health-Monitoring der Integration findet auf HA-Ebene statt (HA Repairs, Logs, Entity-States)
 
 Falls künftig CI (Pre-Deploy-Lint, Tests, etc.) hinzukommt: nachpflegen.

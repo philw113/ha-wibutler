@@ -1,6 +1,6 @@
 # ADR-001 — Fork-Pflege-Strategie ha-wibutler
 
-**Status:** Akzeptiert
+**Status:** Akzeptiert, Punkt 3 (Upstream-Watch per GitHub-Action) ersetzt durch ADR-002
 **Datum:** 2026-05-19
 **Kontext:** Sub-Projekt-Anlage (REP-26) + Wibutler-Bugfix-Welle HA 2026.5
 

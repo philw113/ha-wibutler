@@ -3,6 +3,7 @@ import logging
 from typing import Any, Dict, Optional
 from homeassistant.core import HomeAssistant
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers.typing import ConfigType
 from .const import DOMAIN, PLATFORMS  # Hier wird DOMAIN aus const.py importiert
 from .api import WibutlerHub
@@ -30,8 +31,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     )
 
     if not await hub.authenticate():
-        _LOGGER.error("❌ Authentifizierung fehlgeschlagen!")
-        return False
+        # Upstream 62b6277: HA versucht das Setup selbst erneut, statt den Eintrag bis zum
+        # manuellen Neuladen auf "fehlgeschlagen" zu lassen (Hub haengt, Hub beim Boot nicht erreichbar)
+        raise ConfigEntryNotReady("Wibutler-Hub: Authentifizierung fehlgeschlagen, neuer Versuch folgt")
 
     hass.data[DOMAIN]["hub"] = hub
 
