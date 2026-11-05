@@ -37,15 +37,28 @@ class WibutlerCover(CoverEntity):
         self._fetch_state(device.get("components", []))
 
     def _fetch_state(self, components):
-        """Initialisiert die aktuelle Position aus den Gerätedaten."""
-        for component in components:
-            if component.get("name") == "POS":  # Falls Position gespeichert wird
-                try:
-                    self._position = int(component.get("value"))  # Prozentwert (0-100)
-                except (ValueError, TypeError):
-                    self._position = None
-            if component.get("name") == "STATE":
-                self._state = component.get("value")
+        """Initialisiert die aktuelle Position aus den Gerätedaten.
+
+        CURPOS ist die echte Position, die der Aktor aus seiner Laufzeit rechnet.
+        POS ist nur der zuletzt gesendete Sollwert und dient als Rueckfall fuer Aktoren ohne CURPOS.
+        """
+        values = {c.get("name"): c.get("value") for c in components}
+        if "CURPOS" in values:
+            self._has_curpos = True
+            self._position = self._to_int(values["CURPOS"])
+        elif "POS" in values and not self._has_curpos:
+            self._position = self._to_int(values["POS"])
+        if "STATE" in values:
+            self._state = values["STATE"]
+
+    _has_curpos = False
+
+    @staticmethod
+    def _to_int(value):
+        try:
+            return int(value)  # Prozentwert (0-100), Wibutler zaehlt % geschlossen
+        except (ValueError, TypeError):
+            return None
 
     @property
     def current_cover_position(self):
@@ -57,12 +70,13 @@ class WibutlerCover(CoverEntity):
     @property
     def is_opening(self) -> bool | None:
         """Gibt zurück, ob das Cover gerade öffnet."""
-        return self._state == "Opening"
+        # Der Hub meldet das Fahrtende nicht immer: in der Endlage gilt die Fahrt als beendet
+        return self._state == "Opening" and self._position != 0
 
     @property
     def is_closing(self) -> bool | None:
         """Gibt zurück, ob das Cover gerade schließt."""
-        return self._state == "Closing"
+        return self._state == "Closing" and self._position != 100
 
     @property
     def is_stopped(self) -> bool | None:
@@ -154,9 +168,14 @@ class WibutlerCover(CoverEntity):
         else:
             _LOGGER.error("❌ Fehler beim zweiten Stop-Befehl für %s", self._attr_name)
 
+    @property
+    def available(self) -> bool:
+        """Nicht verfügbar, solange der Stream zum Hub länger getrennt ist."""
+        return self._hub.connected
+
     async def async_added_to_hass(self):
         """Register for WebSocket updates."""
-        self._hub.register_listener(self)
+        self.async_on_remove(self._hub.register_listener(self))
 
     def handle_ws_update(self, device_id, components):
         """Process WebSocket update."""

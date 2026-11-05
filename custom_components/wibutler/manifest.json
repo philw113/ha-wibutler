@@ -1,12 +1,12 @@
 {
     "domain": "wibutler",
     "name": "wibutler",
-    "version": "1.0.1+philw113-fork-2026-10-19",
+    "version": "1.0.1+philw113-fork-2026-11-05",
     "documentation": "https://github.com/philw113/ha-wibutler",
     "requirements": [],
     "dependencies": [],
     "codeowners": ["@patrickweh", "@philw113"],
     "config_flow": true,
-    "iot_class": "local_polling",
+    "iot_class": "local_push",
     "integrations": ["sensor", "switch", "number", "select", "light"]
 }

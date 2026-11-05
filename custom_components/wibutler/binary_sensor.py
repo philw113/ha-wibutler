@@ -109,9 +109,14 @@ class WibutlerBinarySensor(BinarySensorEntity):
                     )
                 self._attr_is_on = new_is_on
 
+    @property
+    def available(self) -> bool:
+        """Nicht verfügbar, solange der Stream zum Hub länger getrennt ist."""
+        return self._hub.connected
+
     async def async_added_to_hass(self):
         """Register for WebSocket updates."""
-        self._hub.register_listener(self)
+        self.async_on_remove(self._hub.register_listener(self))
 
     def handle_ws_update(self, device_id, components):
         """Process WebSocket update."""

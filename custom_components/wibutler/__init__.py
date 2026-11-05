@@ -45,7 +45,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     )
     _LOGGER.debug("✅ Plattformen erfolgreich registriert!")
-    hass.loop.create_task(hub.connect_websocket())
+    # Stream-Task gehoert zum Eintrag: HA beendet sie beim Entladen, sie verbindet nach Abbruch selbst neu
+    hub.ws_task = entry.async_create_background_task(hass, hub.run_stream(), "wibutler_stream")
 
     return True
 
@@ -54,5 +55,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     _LOGGER.debug("🔄 async_unload_entry() wurde aufgerufen!")
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        hass.data[DOMAIN].pop(entry.entry_id, None)
+        # Sonst laeuft nach jedem Neuladen ein weiterer Stream mit
+        hub = hass.data[DOMAIN].pop("hub", None)
+        if hub:
+            await hub.close()
     return unload_ok

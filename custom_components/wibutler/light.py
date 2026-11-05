@@ -163,8 +163,13 @@ class WibutlerLight(LightEntity):
                 elif self._brightness_pct >= MIN_PERCENT:
                     self._is_on = True
 
+    @property
+    def available(self) -> bool:
+        """Nicht verfügbar, solange der Stream zum Hub länger getrennt ist."""
+        return self._hub.connected
+
     async def async_added_to_hass(self):
-        self._hub.register_listener(self)
+        self.async_on_remove(self._hub.register_listener(self))
 
     def handle_ws_update(self, device_id, components):
         self._fetch_state(components)

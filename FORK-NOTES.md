@@ -1,6 +1,6 @@
 # Fork-Notes — Drift zum Upstream
 
-**Letztes Update:** 2026-05-19
+**Letztes Update:** 2026-11-05
 **Notion-REP:** [REP-26](https://www.notion.so/3657f820f55c814ba31ace4847bbe88f)
 **Pflege-Strategie:** [ADR-001](docs/decisions/001-fork-pflege-strategie.md)
 
@@ -14,6 +14,7 @@ Letzter Merge-from-Upstream: `cab4be0` (2025-08-26, Merge PR #9 von Fochest).
 - `47e46d5` (2026-05-19) — feat(climate): extended mode/preset handling with CTSP/ETSP fallbacks
 - `d21626d` (2026-05-19) — fix(api): work around aiohttp response.json() crash on large responses
 - `8b523a8` (2026-05-19) — fix(light): migrate SUPPORT_BRIGHTNESS to ColorMode for HA 2026.5
+- 2026-11-05 — fix: Stream verbindet nach Hub-Neustart selbst neu (Login, Timeout 180 s, Abgleich über `/devices`), Entitäten „nicht verfügbar“ nach 60 s ohne Hub, sauberes Entladen; Rollo-Position aus `CURPOS` (AUF-437, Release 1)
 
 ## Upstream-Stand vs. Fork
 - Upstream `main` ist auf v1.2.0 (Stand 2026-03-07): mehrere Commits voraus, 2 zurück, status `diverged`.
@@ -55,5 +56,7 @@ gh release create v1.0.1-fork-<heute> --repo philw113/ha-wibutler --latest --tit
 Falls künftig CI (Pre-Deploy-Lint, Tests, etc.) hinzukommt: nachpflegen.
 
 ## Bekannte Probleme
+- ~~**Kein Reconnect nach Hub-Neustart**~~ (gesehen 2026-11-05 nach Firmware 2.62: 25 min keine Werte, Eintrag trotzdem „geladen“) — gefixt im Code 2026-11-05, auf HA erst nach Release-Deploy wirksam. Bis dahin: Integration neu laden.
+- ~~**Rollo-Position aus `POS`**~~ (Sollwert statt echter Position) — gefixt 2026-11-05, liest `CURPOS`.
 - ~~**JSONDecodeError beim Setup** seit HA Core 2026.5.1~~ — gefixt 2026-05-19 via `api.py`-Patch (`response.json()` → `json.loads(await response.text())`).
 - ~~**ImportError `SUPPORT_BRIGHTNESS`** in `light.py` seit HA Core 2026.5~~ — gefixt 2026-05-19: migriert auf `_attr_supported_color_modes = {ColorMode.BRIGHTNESS}` + `_attr_color_mode = ColorMode.BRIGHTNESS`.
