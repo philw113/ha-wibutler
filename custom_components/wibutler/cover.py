@@ -1,7 +1,6 @@
 import logging
 from homeassistant.components.cover import CoverEntity, CoverDeviceClass, CoverEntityFeature
 from .const import DOMAIN
-import asyncio
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -33,7 +32,6 @@ class WibutlerCover(CoverEntity):
             CoverEntityFeature.OPEN | CoverEntityFeature.CLOSE | CoverEntityFeature.STOP | CoverEntityFeature.SET_POSITION
         )
         self._position = None
-        self._last_command = None  # Speichert den letzten gesendeten Wert (ON oder OFF)
         self._fetch_state(device.get("components", []))
 
     def _fetch_state(self, components):
@@ -121,7 +119,6 @@ class WibutlerCover(CoverEntity):
         if response:
             _LOGGER.info("⬆️ Cover %s geöffnet", self._attr_name)
             self._position = 0  # Offen = 0% geschlossen
-            self._last_command = "ON"  # Letzter gesendeter Befehl speichern
             self.async_write_ha_state()
         else:
             _LOGGER.error("❌ Fehler beim Öffnen des Covers %s", self._attr_name)
@@ -136,37 +133,32 @@ class WibutlerCover(CoverEntity):
         if response:
             _LOGGER.info("⬇️ Cover %s geschlossen", self._attr_name)
             self._position = 100  # Geschlossen = 100% geschlossen
-            self._last_command = "OFF"  # Letzter gesendeter Befehl speichern
             self.async_write_ha_state()
         else:
             _LOGGER.error("❌ Fehler beim Schließen des Covers %s", self._attr_name)
 
     async def async_stop_cover(self, **kwargs):
-        """Stoppt das Cover, indem der letzte Befehl zweimal gesendet wird."""
-        if self._last_command is None:
-            _LOGGER.warning("⚠️ Kein letzter Befehl bekannt, kann nicht stoppen!")
+        """Stoppt das Cover wie am Wandtaster: dieselbe Richtung waehrend der Fahrt einmal erneut senden.
+
+        Ein zweiter Befehl wuerde den Aktor sofort wieder starten (getestet 2026-11-05).
+        Steht das Cover, wird nichts gesendet, sonst faehrt es los.
+        """
+        if self._state == "Opening":
+            command = "ON"
+        elif self._state == "Closing":
+            command = "OFF"
+        else:
+            _LOGGER.debug("Cover %s faehrt nicht (%s), kein Stopp gesendet", self._attr_name, self._state)
             return
 
-        data = {"value": self._last_command, "type": "switch"}
+        data = {"value": command, "type": "switch"}
         url = f"devices/{self._device_id}/components/SWT_POS"
-
-        # Erster Versuch
-        response = await self._hub._request("PATCH", url, data)
-
-        if not response:
-            _LOGGER.error("❌ Fehler beim ersten Stop-Befehl für %s", self._attr_name)
-            return
-
-        await asyncio.sleep(0.5)  # 🔄 500 ms warten (falls nötig anpassen)
-
-        # Zweiter Versuch
         response = await self._hub._request("PATCH", url, data)
 
         if response:
-            _LOGGER.info("⏹️ Cover %s gestoppt (erneut %s gesendet)", self._attr_name, self._last_command)
-            self.async_write_ha_state()
+            _LOGGER.info("⏹️ Cover %s gestoppt (%s einmal gesendet)", self._attr_name, command)
         else:
-            _LOGGER.error("❌ Fehler beim zweiten Stop-Befehl für %s", self._attr_name)
+            _LOGGER.error("❌ Fehler beim Stop-Befehl für %s", self._attr_name)
 
     @property
     def available(self) -> bool:

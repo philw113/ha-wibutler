@@ -15,6 +15,7 @@ Letzter Merge-from-Upstream: `cab4be0` (2025-08-26, Merge PR #9 von Fochest).
 - `d21626d` (2026-05-19) — fix(api): work around aiohttp response.json() crash on large responses
 - `8b523a8` (2026-05-19) — fix(light): migrate SUPPORT_BRIGHTNESS to ColorMode for HA 2026.5
 - 2026-11-05 — fix: Stream verbindet nach Hub-Neustart selbst neu (Login, Timeout 180 s, Abgleich über `/devices`), Entitäten „nicht verfügbar“ nach 60 s ohne Hub, sauberes Entladen; Rollo-Position aus `CURPOS` (AUF-437, Release 1)
+- 2026-11-05 — fix(cover): Stopp sendet die Fahrtrichtung einmal statt den letzten Befehl zweimal (zweiter Befehl startete den Aktor neu, Rollo fuhr durch); steht das Rollo, wird nichts gesendet (AUF-437, Release 2)
 
 ## Upstream-Stand vs. Fork
 - Upstream `main` ist auf v1.2.0 (Stand 2026-03-07): mehrere Commits voraus, 2 zurück, status `diverged`.
