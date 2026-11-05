@@ -41,6 +41,8 @@ git show <sha>                             # relevante Fixes von Hand portieren 
 git commit && git push origin main
 gh release create v1.0.1-fork-<heute> --repo philw113/ha-wibutler --latest --title ... --notes ...
 # HACS bietet das Update an → vorher Proxmox-Snapshot VM 110 → bestätigen → HA-Neustart → prüfen
+# HACS sieht ein neues Release oft nicht sofort (2026-11-05): dann per Dienst update.install mit
+#   entity_id update.wibutler_integration_update_2 und version <tag> installieren, Dateien per sha256 gegen den Tag pruefen
 ```
 
 ## Warum kein Upstream-Merge jetzt
